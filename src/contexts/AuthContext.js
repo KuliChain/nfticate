@@ -70,7 +70,46 @@ export const AuthProvider = ({ children }) => {
           
           if (profileResult.success) {
             console.log("Found existing profile:", profileResult.data);
-            setUserProfile(profileResult.data);
+            
+            // Check if there's a pending invitation for this user even if they already exist
+            const emailBasedId = firebaseUser.email.replace(/[^a-zA-Z0-9]/g, '_');
+            const inviteResult = await getUserProfile(emailBasedId);
+            
+            if (inviteResult.success && inviteResult.data.isInvited && !inviteResult.data.isActive) {
+              console.log("Found pending invitation for existing user:", inviteResult.data);
+              
+              // Upgrade existing user with invitation data
+              const upgradedProfile = {
+                ...profileResult.data,
+                role: inviteResult.data.role,
+                organizationId: inviteResult.data.organizationId,
+                permissions: inviteResult.data.permissions,
+                lastLoginAt: new Date().toISOString()
+              };
+              
+              console.log("Upgrading existing user with invitation:", upgradedProfile);
+              
+              const updateResult = await updateUserProfile(firebaseUser.uid, upgradedProfile);
+              if (updateResult.success) {
+                setUserProfile(upgradedProfile);
+                console.log("User successfully upgraded with invitation data");
+                
+                // Mark invitation as accepted
+                try {
+                  await updateUserProfile(emailBasedId, { 
+                    ...inviteResult.data, 
+                    isActive: true,
+                    acceptedAt: new Date().toISOString() 
+                  });
+                } catch (e) {
+                  console.log("Could not update invitation record:", e);
+                }
+              } else {
+                setUserProfile(profileResult.data);
+              }
+            } else {
+              setUserProfile(profileResult.data);
+            }
           } else {
             // Check if user was invited by email
             const emailBasedId = firebaseUser.email.replace(/[^a-zA-Z0-9]/g, '_');
