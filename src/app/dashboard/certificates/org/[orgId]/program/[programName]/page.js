@@ -5,7 +5,8 @@ import { useAuth } from "../../../../../../../contexts/AuthContext";
 import DashboardLayout from "../../../../../../../components/DashboardLayout";
 import { 
   getOrganization,
-  getCertificatesByOrganization
+  getCertificatesByOrganization,
+  deleteCertificate
 } from "../../../../../../../lib/database";
 
 export default function ProgramCertificatesPage() {
@@ -22,6 +23,9 @@ export default function ProgramCertificatesPage() {
   const [error, setError] = useState("");
   const [filter, setFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [certificateToDelete, setCertificateToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
@@ -117,16 +121,36 @@ export default function ProgramCertificatesPage() {
     return date.toLocaleDateString();
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "verified":
-        return "bg-green-100 text-green-800";
-      case "pending":
-        return "bg-yellow-100 text-yellow-800";
-      case "expired":
-        return "bg-red-100 text-red-800";
-      default:
-        return "bg-slate-100 text-slate-800";
+  const isExpired = (expiryDate) => {
+    if (!expiryDate) return false;
+    return new Date(expiryDate) < new Date();
+  };
+
+  const handleDeleteClick = (certificate) => {
+    setCertificateToDelete(certificate);
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!certificateToDelete) return;
+    
+    setIsDeleting(true);
+    try {
+      const result = await deleteCertificate(certificateToDelete.id);
+      if (result.success) {
+        // Remove from local state
+        setCertificates(prev => prev.filter(cert => cert.id !== certificateToDelete.id));
+        setFilteredCertificates(prev => prev.filter(cert => cert.id !== certificateToDelete.id));
+        setShowDeleteModal(false);
+        setCertificateToDelete(null);
+      } else {
+        setError(result.error);
+      }
+    } catch (error) {
+      setError("Failed to delete certificate");
+      console.error("Delete error:", error);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -219,9 +243,9 @@ export default function ProgramCertificatesPage() {
             <div className="bg-white rounded-xl border border-slate-200 p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-slate-600">Verified</p>
+                  <p className="text-sm font-medium text-slate-600">Active</p>
                   <p className="text-3xl font-bold text-green-600">
-                    {certificates.filter(c => c.status === "verified").length}
+                    {certificates.filter(c => !isExpired(c.expiryDate)).length}
                   </p>
                 </div>
                 <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
@@ -235,13 +259,13 @@ export default function ProgramCertificatesPage() {
             <div className="bg-white rounded-xl border border-slate-200 p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-slate-600">Pending</p>
-                  <p className="text-3xl font-bold text-yellow-600">
-                    {certificates.filter(c => c.status === "pending").length}
+                  <p className="text-sm font-medium text-slate-600">Expired</p>
+                  <p className="text-3xl font-bold text-red-600">
+                    {certificates.filter(c => isExpired(c.expiryDate)).length}
                   </p>
                 </div>
-                <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-                  <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                  <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
@@ -358,9 +382,11 @@ export default function ProgramCertificatesPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(certificate.status)}`}>
-                          {certificate.status || "pending"}
-                        </span>
+                        {isExpired(certificate.expiryDate) && (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            Expired
+                          </span>
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
                         {formatDate(certificate.certificateInfo?.issueDate)}
@@ -387,6 +413,14 @@ export default function ProgramCertificatesPage() {
                             className="text-purple-600 hover:text-purple-700"
                           >
                             Download
+                          </button>
+                        )}
+                        {(isSuperAdmin || isAdmin) && (
+                          <button
+                            onClick={() => handleDeleteClick(certificate)}
+                            className="text-red-600 hover:text-red-700"
+                          >
+                            Delete
                           </button>
                         )}
                       </td>
@@ -424,6 +458,51 @@ export default function ProgramCertificatesPage() {
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 flex items-center justify-center p-4 z-50 backdrop-blur-sm" style={{backgroundColor: 'rgba(0,0,0,0.5)'}}>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+            <div className="flex items-center mb-4">
+              <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mr-3">
+                <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold text-slate-900">Delete Certificate</h3>
+            </div>
+            
+            <p className="text-slate-600 mb-6">
+              Are you sure you want to delete <strong>"{certificateToDelete?.certificateInfo?.title || 'this certificate'}"</strong>? 
+              This action cannot be undone.
+            </p>
+            
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                disabled={isDeleting}
+                className="px-4 py-2 text-slate-600 hover:text-slate-800 font-medium rounded-lg hover:bg-slate-100 transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                disabled={isDeleting}
+                className="px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {isDeleting ? (
+                  <div className="flex items-center space-x-2">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>Deleting...</span>
+                  </div>
+                ) : (
+                  'Delete'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   );
 }

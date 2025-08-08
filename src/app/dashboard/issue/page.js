@@ -4,8 +4,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "../../../contexts/AuthContext";
 import DashboardLayout from "../../../components/DashboardLayout";
 import { createCertificate } from "../../../lib/database";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { storage } from "../../../lib/firebase";
+import { uploadFile } from "../../../lib/supabase";
 
 export default function IssueCertificate() {
   const { userProfile, loading, isAuthenticated, isAdmin, isSuperAdmin } = useAuth();
@@ -74,12 +73,15 @@ export default function IssueCertificate() {
     }
   };
 
-  const uploadFileToStorage = async (file, path) => {
+  const uploadFileToStorage = async (file, folder = 'certificates') => {
     if (!file) return null;
     
-    const storageRef = ref(storage, `certificates/${path}/${Date.now()}_${file.name}`);
-    const uploadResult = await uploadBytes(storageRef, file);
-    return await getDownloadURL(uploadResult.ref);
+    const uploadResult = await uploadFile(file, folder);
+    if (uploadResult.success) {
+      return uploadResult.data.publicUrl;
+    } else {
+      throw new Error(uploadResult.error);
+    }
   };
 
   const generateCertificateHash = (certificateData) => {
@@ -197,8 +199,7 @@ export default function IssueCertificate() {
           generateQR: formData.generateQR,
         },
         
-        // Status
-        status: "pending", // pending, verified, expired
+        // Certificate is already verified since it's being uploaded as completed document
         verificationCount: 0,
       };
 
@@ -213,7 +214,7 @@ export default function IssueCertificate() {
         transactionHash: null,
         blockNumber: null,
         network: null,
-        status: "pending", // pending, confirmed, failed
+        status: "pending", // pending blockchain confirmation, not certificate approval
       };
 
       setUploadProgress(70);

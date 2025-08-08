@@ -430,40 +430,18 @@ export const updateCertificateBlockchainInfo = async (certificateId, blockchainD
   }
 };
 
-export const getCertificatesByStatus = async (status, organizationId = null) => {
+export const deleteCertificate = async (certificateId) => {
   try {
-    let certsQuery;
-    
-    if (organizationId) {
-      certsQuery = query(
-        collection(db, "certificates"),
-        where("status", "==", status),
-        where("organizationId", "==", organizationId),
-        where("isActive", "==", true),
-        orderBy("createdAt", "desc")
-      );
-    } else {
-      certsQuery = query(
-        collection(db, "certificates"),
-        where("status", "==", status),
-        where("isActive", "==", true),
-        orderBy("createdAt", "desc")
-      );
-    }
-    
-    const certsSnapshot = await getDocs(certsQuery);
-    const certificates = [];
-    
-    certsSnapshot.forEach((doc) => {
-      certificates.push({ id: doc.id, ...doc.data() });
-    });
-    
-    return { success: true, data: certificates };
+    await deleteDoc(doc(db, "certificates", certificateId));
+    return { success: true };
   } catch (error) {
-    console.error("Error getting certificates by status:", error);
+    console.error("Error deleting certificate:", error);
     return { success: false, error: error.message };
   }
 };
+
+// Removed getCertificatesByStatus - status-based filtering no longer needed
+// Certificates are valid by default when uploaded
 
 export const incrementCertificateVerification = async (certificateId) => {
   try {
@@ -554,15 +532,19 @@ export const getCertificateStats = async (organizationId = null) => {
     const totalSnapshot = await getDocs(totalQuery);
     const totalCertificates = totalSnapshot.size;
     
-    // Certificates by status
-    const statusStats = {};
-    const statuses = ["pending", "verified", "expired"];
+    // Check expired certificates (based on expiry date, not status)
+    const now = new Date();
+    const activeCertificates = [];
+    const expiredCertificates = [];
     
-    for (const status of statuses) {
-      const statusQuery = query(baseQuery, ...constraints, where("status", "==", status));
-      const statusSnapshot = await getDocs(statusQuery);
-      statusStats[status] = statusSnapshot.size;
-    }
+    totalSnapshot.forEach((doc) => {
+      const cert = doc.data();
+      if (cert.expiryDate && new Date(cert.expiryDate) < now) {
+        expiredCertificates.push(cert);
+      } else {
+        activeCertificates.push(cert);
+      }
+    });
     
     // This month's certificates
     const thisMonth = new Date();
@@ -581,7 +563,8 @@ export const getCertificateStats = async (organizationId = null) => {
       success: true, 
       data: {
         totalCertificates,
-        statusStats,
+        activeCertificates: activeCertificates.length,
+        expiredCertificates: expiredCertificates.length,
         thisMonthCount,
         lastUpdated: new Date().toISOString()
       }

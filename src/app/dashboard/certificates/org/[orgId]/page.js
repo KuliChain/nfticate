@@ -70,8 +70,7 @@ export default function OrganizationProgramsPage() {
               name: program,
               certificates: [],
               totalCount: 0,
-              verifiedCount: 0,
-              pendingCount: 0,
+              activeCount: 0,
               expiredCount: 0
             };
           }
@@ -79,9 +78,12 @@ export default function OrganizationProgramsPage() {
           programMap[program].certificates.push(cert);
           programMap[program].totalCount++;
           
-          if (cert.status === "verified") programMap[program].verifiedCount++;
-          else if (cert.status === "pending") programMap[program].pendingCount++;
-          else if (cert.status === "expired") programMap[program].expiredCount++;
+          // Check if certificate is expired based on expiry date
+          if (cert.expiryDate && new Date(cert.expiryDate) < new Date()) {
+            programMap[program].expiredCount++;
+          } else {
+            programMap[program].activeCount++;
+          }
         });
 
         setPrograms(Object.values(programMap));
@@ -187,9 +189,9 @@ export default function OrganizationProgramsPage() {
             <div className="bg-white rounded-xl border border-slate-200 p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-slate-600">Verified</p>
+                  <p className="text-sm font-medium text-slate-600">Active</p>
                   <p className="text-3xl font-bold text-green-600">
-                    {certificates.filter(c => c.status === "verified").length}
+                    {certificates.filter(c => !c.expiryDate || new Date(c.expiryDate) >= new Date()).length}
                   </p>
                 </div>
                 <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
@@ -203,13 +205,13 @@ export default function OrganizationProgramsPage() {
             <div className="bg-white rounded-xl border border-slate-200 p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-slate-600">Pending</p>
-                  <p className="text-3xl font-bold text-yellow-600">
-                    {certificates.filter(c => c.status === "pending").length}
+                  <p className="text-sm font-medium text-slate-600">Expired</p>
+                  <p className="text-3xl font-bold text-red-600">
+                    {certificates.filter(c => c.expiryDate && new Date(c.expiryDate) < new Date()).length}
                   </p>
                 </div>
-                <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-                  <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                  <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
@@ -270,12 +272,12 @@ export default function OrganizationProgramsPage() {
                 {/* Certificate Statistics */}
                 <div className="grid grid-cols-3 gap-4 mb-4">
                   <div className="text-center">
-                    <div className="text-lg font-semibold text-green-600">{program.verifiedCount}</div>
-                    <div className="text-xs text-slate-600">Verified</div>
+                    <div className="text-lg font-semibold text-green-600">{program.activeCount}</div>
+                    <div className="text-xs text-slate-600">Active</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-lg font-semibold text-yellow-600">{program.pendingCount}</div>
-                    <div className="text-xs text-slate-600">Pending</div>
+                    <div className="text-lg font-semibold text-slate-600">{program.totalCount}</div>
+                    <div className="text-xs text-slate-600">Total</div>
                   </div>
                   <div className="text-center">
                     <div className="text-lg font-semibold text-red-600">{program.expiredCount}</div>

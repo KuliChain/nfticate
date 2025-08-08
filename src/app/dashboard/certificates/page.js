@@ -6,7 +6,6 @@ import DashboardLayout from "../../../components/DashboardLayout";
 import { 
   getCertificatesByOrganization, 
   getCertificatesByRecipient, 
-  getCertificatesByStatus,
   getAllOrganizations,
   getOrganization
 } from "../../../lib/database";
@@ -19,7 +18,7 @@ export default function CertificatesPage() {
   const [certificates, setCertificates] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
-  const [filter, setFilter] = useState("all"); // all, pending, verified, expired
+  const [filter, setFilter] = useState("all"); // all, expired (by date)
   const [searchTerm, setSearchTerm] = useState("");
   
   // For admin/superadmin hierarchical view
@@ -51,9 +50,9 @@ export default function CertificatesPage() {
       const result = await getCertificatesByRecipient(user.uid);
       
       if (result.success) {
-        // Apply filter to student's certificates
-        if (filter !== "all") {
-          setCertificates(result.data.filter(cert => cert.status === filter));
+        // Apply expiry filter to student's certificates
+        if (filter === "expired") {
+          setCertificates(result.data.filter(cert => isExpired(cert.expiryDate)));
         } else {
           setCertificates(result.data);
         }
@@ -97,18 +96,22 @@ export default function CertificatesPage() {
             const certResult = await getCertificatesByOrganization(org.id);
             if (certResult.success) {
               const certs = certResult.data;
+              const now = new Date();
+              const expiredCerts = certs.filter(c => 
+                c.expiryDate && new Date(c.expiryDate) < now
+              );
+              
               counts[org.id] = {
                 total: certs.length,
-                verified: certs.filter(c => c.status === "verified").length,
-                pending: certs.filter(c => c.status === "pending").length,
-                expired: certs.filter(c => c.status === "expired").length
+                active: certs.length - expiredCerts.length,
+                expired: expiredCerts.length
               };
             } else {
-              counts[org.id] = { total: 0, verified: 0, pending: 0, expired: 0 };
+              counts[org.id] = { total: 0, active: 0, expired: 0 };
             }
           } catch (error) {
             console.error(`Error loading certificates for org ${org.id}:`, error);
-            counts[org.id] = { total: 0, verified: 0, pending: 0, expired: 0 };
+            counts[org.id] = { total: 0, active: 0, expired: 0 };
           }
         }
         setOrgCertificateCounts(counts);
@@ -123,17 +126,9 @@ export default function CertificatesPage() {
     }
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "verified":
-        return "bg-green-100 text-green-800";
-      case "pending":
-        return "bg-yellow-100 text-yellow-800";
-      case "expired":
-        return "bg-red-100 text-red-800";
-      default:
-        return "bg-slate-100 text-slate-800";
-    }
+  const isExpired = (expiryDate) => {
+    if (!expiryDate) return false;
+    return new Date(expiryDate) < new Date();
   };
 
   const formatDate = (timestamp) => {
@@ -191,9 +186,9 @@ export default function CertificatesPage() {
           {/* Filters and Search */}
           <div className="bg-white rounded-lg border border-slate-200 p-4">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
-              {/* Status Filter */}
+              {/* Certificate Filter */}
               <div className="flex flex-wrap gap-2">
-                {["all", "verified", "pending", "expired"].map((status) => (
+                {["all", "expired"].map((status) => (
                   <button
                     key={status}
                     onClick={() => setFilter(status)}
@@ -203,7 +198,7 @@ export default function CertificatesPage() {
                         : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                     }`}
                   >
-                    {status.charAt(0).toUpperCase() + status.slice(1)}
+                    {status === "all" ? "All Certificates" : "Expired Only"}
                   </button>
                 ))}
               </div>
@@ -250,9 +245,11 @@ export default function CertificatesPage() {
                       {certificate.recipientInfo?.name || "Unknown Recipient"}
                     </p>
                   </div>
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(certificate.status)}`}>
-                    {certificate.status || "pending"}
-                  </span>
+                  {isExpired(certificate.expiryDate) && (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                      Expired
+                    </span>
+                  )}
                 </div>
 
                 {/* Certificate Details */}
@@ -366,15 +363,9 @@ export default function CertificatesPage() {
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-green-600">
-                    {certificates.filter(c => c.status === "verified").length}
+                    {certificates.filter(c => !isExpired(c.expiryDate)).length}
                   </div>
-                  <div className="text-sm text-slate-600">Verified</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-yellow-600">
-                    {certificates.filter(c => c.status === "pending").length}
-                  </div>
-                  <div className="text-sm text-slate-600">Pending</div>
+                  <div className="text-sm text-slate-600">Active</div>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-slate-600">
@@ -436,7 +427,7 @@ export default function CertificatesPage() {
         ) : organizations.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {organizations.map((organization) => {
-              const counts = orgCertificateCounts[organization.id] || { total: 0, verified: 0, pending: 0, expired: 0 };
+              const counts = orgCertificateCounts[organization.id] || { total: 0, active: 0, expired: 0 };
               
               return (
                 <div
@@ -474,12 +465,12 @@ export default function CertificatesPage() {
                   {/* Certificate Statistics */}
                   <div className="grid grid-cols-3 gap-4 mb-4">
                     <div className="text-center">
-                      <div className="text-lg font-semibold text-green-600">{counts.verified}</div>
-                      <div className="text-xs text-slate-600">Verified</div>
+                      <div className="text-lg font-semibold text-slate-900">{counts.total}</div>
+                      <div className="text-xs text-slate-600">Total</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-lg font-semibold text-yellow-600">{counts.pending}</div>
-                      <div className="text-xs text-slate-600">Pending</div>
+                      <div className="text-lg font-semibold text-green-600">{counts.active}</div>
+                      <div className="text-xs text-slate-600">Active</div>
                     </div>
                     <div className="text-center">
                       <div className="text-lg font-semibold text-red-600">{counts.expired}</div>
