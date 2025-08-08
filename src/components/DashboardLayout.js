@@ -36,7 +36,17 @@ export default function DashboardLayout({ children }) {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
       ),
-      roles: ["student", "admin", "superadmin"]
+      roles: ["student"]
+    },
+    {
+      name: "Certificate Management", 
+      href: "/dashboard/certificates",
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+        </svg>
+      ),
+      roles: ["admin", "superadmin"]
     },
     {
       name: "Verify Certificate",
@@ -49,14 +59,14 @@ export default function DashboardLayout({ children }) {
       roles: ["student", "admin", "superadmin"]
     },
     {
-      name: "Organization",
-      href: "/dashboard/organization",
+      name: "Manage Organizations",
+      href: "/admin/organizations", 
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
         </svg>
       ),
-      roles: ["admin", "superadmin"]
+      roles: ["superadmin"]
     },
     {
       name: "Issue Certificates",
@@ -72,31 +82,11 @@ export default function DashboardLayout({ children }) {
 
   const adminNavigation = [
     {
-      name: "Manage Organizations",
-      href: "/admin/organizations",
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-        </svg>
-      ),
-      roles: ["superadmin"]
-    },
-    {
       name: "Manage Users",
       href: "/admin/users",
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-        </svg>
-      ),
-      roles: ["superadmin"]
-    },
-    {
-      name: "System Analytics",
-      href: "/admin/analytics",
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
         </svg>
       ),
       roles: ["superadmin"]
@@ -106,6 +96,18 @@ export default function DashboardLayout({ children }) {
   const userRole = userProfile?.role || "student";
   const visibleNavigation = navigation.filter(item => item.roles.includes(userRole));
   const visibleAdminNavigation = adminNavigation.filter(item => item.roles.includes(userRole));
+
+  // Don't render navigation until userProfile is loaded to prevent flickering
+  if (!userProfile && user) {
+    return (
+      <div className="h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-2 text-slate-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen bg-slate-50 flex overflow-hidden">
@@ -130,32 +132,6 @@ export default function DashboardLayout({ children }) {
             <span className="ml-3 text-lg font-bold text-slate-800">NFTicate</span>
           </div>
 
-          {/* User info */}
-          <div className="px-6 py-4 border-b border-slate-200">
-            <div className="flex items-center">
-              {user?.photoURL ? (
-                <img 
-                  src={user.photoURL} 
-                  alt="Profile" 
-                  className="w-10 h-10 rounded-full"
-                />
-              ) : (
-                <div className="w-10 h-10 bg-slate-300 rounded-full flex items-center justify-center">
-                  <span className="text-slate-600 font-medium">
-                    {user?.displayName?.charAt(0) || user?.email?.charAt(0) || "U"}
-                  </span>
-                </div>
-              )}
-              <div className="ml-3 min-w-0 flex-1">
-                <p className="text-sm font-medium text-slate-900 truncate">
-                  {user?.displayName || user?.email}
-                </p>
-                <p className="text-xs text-slate-500 capitalize">
-                  {userProfile?.role || "student"}
-                </p>
-              </div>
-            </div>
-          </div>
 
           {/* Navigation */}
           <nav className="flex-1 px-4 py-4 space-y-2 overflow-y-auto min-h-0">
@@ -199,11 +175,19 @@ export default function DashboardLayout({ children }) {
                 {/* User Profile */}
                 <div className="px-4 py-3">
                   <div className="flex items-center">
-                    <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
-                      <span className="text-white text-sm font-medium">
-                        {(user.displayName || user.email).charAt(0).toUpperCase()}
-                      </span>
-                    </div>
+                    {user.photoURL ? (
+                      <img 
+                        src={user.photoURL} 
+                        alt="Profile"
+                        className="w-8 h-8 rounded-full"
+                      />
+                    ) : (
+                      <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                        <span className="text-white text-sm font-medium">
+                          {(user.displayName || user.email).charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                    )}
                     <div className="ml-2 flex-1 min-w-0">
                       <p className="text-sm font-medium text-slate-900 truncate">
                         {user.displayName || "User"}

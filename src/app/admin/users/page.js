@@ -424,10 +424,10 @@ export default function UsersPage() {
             </div>
           ) : (
             <div className="divide-y divide-slate-200">
-              {filteredUsers.map((userData) => {
+              {filteredUsers.map((userData, index) => {
                 const org = organizations.find(o => o.id === userData.organizationId);
                 return (
-                  <div key={userData.uid} className="p-6 hover:bg-slate-50">
+                  <div key={userData.uid || userData.id || userData.email || index} className="p-6 hover:bg-slate-50">
                     <div className="flex items-center justify-between">
                       <div className="flex-1">
                         <div className="flex items-center space-x-3">
@@ -525,7 +525,7 @@ export default function UsersPage() {
               </div>
             ) : (
               <div className="divide-y divide-slate-200">
-                {pendingInvitations.map((invitation) => {
+                {pendingInvitations.map((invitation, index) => {
                   const org = organizations.find(o => o.id === invitation.organizationId);
                   const expiresAt = invitation.expiresAt?.seconds 
                     ? new Date(invitation.expiresAt.seconds * 1000) 
@@ -533,7 +533,7 @@ export default function UsersPage() {
                   const isExpiringSoon = expiresAt && expiresAt.getTime() - Date.now() < 24 * 60 * 60 * 1000; // 24 hours
 
                   return (
-                    <div key={invitation.id} className="p-6 hover:bg-slate-50">
+                    <div key={invitation.id || invitation.email || index} className="p-6 hover:bg-slate-50">
                       <div className="flex items-center justify-between">
                         <div className="flex-1">
                           <div className="flex items-center space-x-3">

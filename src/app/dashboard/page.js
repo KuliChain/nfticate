@@ -78,19 +78,21 @@ export default function Dashboard() {
         {isSuperAdmin && (
           <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl p-6 text-white">
             <h2 className="text-xl font-bold mb-4">🔧 SuperAdmin Controls</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <a href="/admin/organizations" className="bg-white/10 hover:bg-white/20 rounded-lg p-4 transition-colors block">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <button 
+                onClick={() => router.push("/admin/organizations")} 
+                className="bg-white/10 hover:bg-white/20 rounded-lg p-4 transition-colors text-left w-full"
+              >
                 <div className="font-semibold">🏢 Organizations</div>
                 <div className="text-sm text-blue-100 mt-1">Create and manage institutions</div>
-              </a>
-              <a href="/admin/users" className="bg-white/10 hover:bg-white/20 rounded-lg p-4 transition-colors block">
+              </button>
+              <button 
+                onClick={() => router.push("/admin/users")} 
+                className="bg-white/10 hover:bg-white/20 rounded-lg p-4 transition-colors text-left w-full"
+              >
                 <div className="font-semibold">👥 Users</div>
                 <div className="text-sm text-blue-100 mt-1">Invite admins and manage roles</div>
-              </a>
-              <a href="/admin" className="bg-white/10 hover:bg-white/20 rounded-lg p-4 transition-colors block">
-                <div className="font-semibold">📊 Analytics</div>
-                <div className="text-sm text-blue-100 mt-1">View platform statistics</div>
-              </a>
+              </button>
             </div>
           </div>
         )}
@@ -99,20 +101,31 @@ export default function Dashboard() {
           <div className="bg-gradient-to-r from-emerald-600 to-emerald-700 rounded-xl p-6 text-white">
             <h2 className="text-xl font-bold mb-4">🎓 Admin Tools</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <a href="/dashboard/issue" className="bg-white/10 hover:bg-white/20 rounded-lg p-4 transition-colors block">
+              <button 
+                onClick={() => router.push("/dashboard/issue")} 
+                className="bg-white/10 hover:bg-white/20 rounded-lg p-4 transition-colors text-left w-full"
+              >
                 <div className="font-semibold">📋 Issue Certificates</div>
                 <div className="text-sm text-emerald-100 mt-1">Create new certificates for students</div>
-              </a>
-              <a href="/dashboard/organization" className="bg-white/10 hover:bg-white/20 rounded-lg p-4 transition-colors block">
-                <div className="font-semibold">🏢 Organization</div>
-                <div className="text-sm text-emerald-100 mt-1">Manage your institution</div>
-              </a>
+              </button>
+              <button 
+                onClick={() => router.push("/dashboard/certificates")} 
+                className="bg-white/10 hover:bg-white/20 rounded-lg p-4 transition-colors text-left w-full"
+              >
+                <div className="font-semibold">🏢 Manage Certificates</div>
+                <div className="text-sm text-emerald-100 mt-1">View and manage organization certificates</div>
+              </button>
             </div>
           </div>
         )}
 
-        {/* Quick Actions for all users */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Quick Actions - Role-based */}
+        <div className={`grid grid-cols-1 gap-6 ${
+          isSuperAdmin ? 'md:grid-cols-3' : 
+          isAdmin ? 'md:grid-cols-2' : 
+          'md:grid-cols-3'
+        }`}>
+          {/* Verify Certificate - All users */}
           <div className="bg-white rounded-xl border border-slate-200 p-6 hover:shadow-md transition-shadow">
             <div className="flex items-center mb-4">
               <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -123,26 +136,64 @@ export default function Dashboard() {
               <h3 className="ml-4 text-lg font-semibold text-slate-900">Verify Certificate</h3>
             </div>
             <p className="text-slate-600 mb-4">Check the authenticity of any certificate</p>
-            <a href="/verify" className="text-blue-600 font-medium hover:text-blue-700">
+            <button 
+              onClick={() => router.push("/verify")} 
+              className="text-blue-600 font-medium hover:text-blue-700"
+            >
               Start Verification →
-            </a>
+            </button>
           </div>
 
-          <div className="bg-white rounded-xl border border-slate-200 p-6 hover:shadow-md transition-shadow">
-            <div className="flex items-center mb-4">
-              <div className="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center">
-                <svg className="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                </svg>
+          {/* My Certificates - Only for Students */}
+          {userProfile?.role === "student" && (
+            <div className="bg-white rounded-xl border border-slate-200 p-6 hover:shadow-md transition-shadow">
+              <div className="flex items-center mb-4">
+                <div className="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center">
+                  <svg className="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                  </svg>
+                </div>
+                <h3 className="ml-4 text-lg font-semibold text-slate-900">My Certificates</h3>
               </div>
-              <h3 className="ml-4 text-lg font-semibold text-slate-900">My Certificates</h3>
+              <p className="text-slate-600 mb-4">View all your verified certificates</p>
+              <button 
+                onClick={() => router.push("/dashboard/certificates")} 
+                className="text-emerald-600 font-medium hover:text-emerald-700"
+              >
+                View Certificates →
+              </button>
             </div>
-            <p className="text-slate-600 mb-4">View all your verified certificates</p>
-            <a href="/dashboard/certificates" className="text-emerald-600 font-medium hover:text-emerald-700">
-              View Certificates →
-            </a>
-          </div>
+          )}
 
+          {/* Certificate Management - Admin & SuperAdmin */}
+          {(isAdmin || isSuperAdmin) && (
+            <div className="bg-white rounded-xl border border-slate-200 p-6 hover:shadow-md transition-shadow">
+              <div className="flex items-center mb-4">
+                <div className={`w-12 h-12 ${isSuperAdmin ? 'bg-purple-100' : 'bg-emerald-100'} rounded-lg flex items-center justify-center`}>
+                  <svg className={`w-6 h-6 ${isSuperAdmin ? 'text-purple-600' : 'text-emerald-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                  </svg>
+                </div>
+                <h3 className="ml-4 text-lg font-semibold text-slate-900">
+                  {isSuperAdmin ? "Certificate Management" : "Organization Certificates"}
+                </h3>
+              </div>
+              <p className="text-slate-600 mb-4">
+                {isSuperAdmin 
+                  ? "Manage certificates across all organizations by programs" 
+                  : "Manage certificates issued by your organization"
+                }
+              </p>
+              <button 
+                onClick={() => router.push("/dashboard/certificates")} 
+                className={`font-medium ${isSuperAdmin ? 'text-purple-600 hover:text-purple-700' : 'text-emerald-600 hover:text-emerald-700'}`}
+              >
+                Manage Certificates →
+              </button>
+            </div>
+          )}
+
+          {/* Profile Settings - All users */}
           <div className="bg-white rounded-xl border border-slate-200 p-6 hover:shadow-md transition-shadow">
             <div className="flex items-center mb-4">
               <div className="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center">
