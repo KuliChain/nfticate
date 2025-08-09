@@ -47,7 +47,7 @@ export default function CertificatesPage() {
     setError("");
 
     try {
-      const result = await getCertificatesByRecipient(user.uid);
+      const result = await getCertificatesByRecipient(user.email);
       
       if (result.success) {
         // Apply expiry filter to student's certificates

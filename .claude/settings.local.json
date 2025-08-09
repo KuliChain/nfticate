@@ -9,7 +9,8 @@
       "Bash(move \"C:\\Users\\wahyu\\Documents\\nfticate\\src\\app\\dashboard\\certificates\\org\\[orgId]\\page.js\" \"C:\\Users\\wahyu\\Documents\\nfticate\\src\\app\\dashboard\\certificates\\org\\[orgId]\\page.js\")",
       "Bash(mv:*)",
       "Bash(grep:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(start:*)"
     ],
     "deny": []
   }

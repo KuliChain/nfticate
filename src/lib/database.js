@@ -250,11 +250,11 @@ export const getCertificatesByOrganization = async (organizationId) => {
   }
 };
 
-export const getCertificatesByRecipient = async (recipientId) => {
+export const getCertificatesByRecipient = async (recipientEmail) => {
   try {
     const certsQuery = query(
       collection(db, "certificates"),
-      where("recipientId", "==", recipientId),
+      where("recipientInfo.email", "==", recipientEmail),
       where("isActive", "==", true),
       orderBy("createdAt", "desc")
     );

@@ -68,19 +68,19 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col justify-center">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        {/* Logo */}
-        <div className="flex justify-center mb-8">
-          <a href="/" className="flex items-center">
-            <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center">
-              <span className="text-white font-bold text-2xl">N</span>
-            </div>
-            <span className="ml-3 text-2xl font-bold text-slate-800">NFTicate</span>
-          </a>
-        </div>
-
         {/* Login Form */}
         <div className="bg-white py-12 px-8 shadow-xl rounded-2xl border border-slate-200">
           <div className="sm:mx-auto sm:w-full sm:max-w-md">
+            {/* Logo */}
+            <div className="flex justify-center mb-8">
+              <a href="/" className="flex items-center">
+                <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center">
+                  <span className="text-white font-bold text-2xl">N</span>
+                </div>
+                <span className="ml-3 text-2xl font-bold text-slate-800">NFTicate</span>
+              </a>
+            </div>
+
             <h2 className="text-center text-3xl font-bold text-slate-900 mb-2">
               Welcome Back
             </h2>

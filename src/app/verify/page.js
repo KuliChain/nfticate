@@ -62,18 +62,6 @@ export default function VerifyPage() {
     return new Date(dateString).toLocaleDateString();
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "verified":
-        return "text-green-600 bg-green-50 border-green-200";
-      case "pending":
-        return "text-yellow-600 bg-yellow-50 border-yellow-200";
-      case "expired":
-        return "text-red-600 bg-red-50 border-red-200";
-      default:
-        return "text-slate-600 bg-slate-50 border-slate-200";
-    }
-  };
 
   // Loading state
   if (loading) {
@@ -178,12 +166,6 @@ export default function VerifyPage() {
                         <div>
                           <label className="block text-sm font-medium text-slate-700">Issue Date</label>
                           <p className="text-slate-900">{formatDate(verificationResult.certificate.certificateInfo?.issueDate)}</p>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-slate-700">Status</label>
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(verificationResult.certificate.status)}`}>
-                            {verificationResult.certificate.status}
-                          </span>
                         </div>
                       </div>
                     </div>
