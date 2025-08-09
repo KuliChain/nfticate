@@ -184,7 +184,7 @@ export default function Home() {
             type="text"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            placeholder="Masukkan ID sertifikat (contoh: UI-2024-001)"
+            placeholder="Masukkan ID sertifikat (contoh: ITERA-2025-001)"
             className="w-full px-4 py-3 pl-10 border-2 border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 text-sm font-mono transition-all duration-200 placeholder-slate-400"
             required
           />
@@ -342,7 +342,7 @@ export default function Home() {
                   type="text"
                   value={certificateId}
                   onChange={(e) => setCertificateId(e.target.value)}
-                  placeholder="Masukkan ID sertifikat (contoh: UI-2024-001)"
+                  placeholder="Masukkan ID sertifikat (contoh: ITERA-2025-001)"
                   className="relative w-full px-6 sm:px-8 py-4 sm:py-6 text-lg sm:text-xl bg-white/95 backdrop-blur-xl border-2 border-slate-200 rounded-2xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all duration-300 shadow-2xl hover:shadow-3xl font-medium placeholder-slate-400 focus:bg-white z-10"
                   disabled={isVerifying}
                 />
@@ -543,12 +543,12 @@ export default function Home() {
               <div className="space-y-3 text-slate-300 text-lg">
                 <div className="hover:text-blue-400 transition-colors cursor-pointer">support@nfticate.com</div>
                 <div className="hover:text-blue-400 transition-colors cursor-pointer">+62 123 4567 8900</div>
-                <div className="hover:text-blue-400 transition-colors cursor-pointer">Jakarta, Indonesia</div>
+                <div className="hover:text-blue-400 transition-colors cursor-pointer">Bandar Lampung, Indonesia</div>
               </div>
             </div>
           </div>
           <div className="border-t border-slate-700 mt-12 pt-8 text-center text-slate-400 text-lg">
-            <p>&copy; 2024 NFTicate. All rights reserved. Built with ❤️ and Blockchain Technology.</p>
+            <p>&copy; 2025 NFTicate. All rights reserved.</p>
           </div>
         </div>
       </footer>

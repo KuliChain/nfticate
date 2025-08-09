@@ -105,7 +105,7 @@ export default function VerifyPage() {
                     name="certificateId"
                     value={certificateId}
                     onChange={(e) => setCertificateId(e.target.value)}
-                    placeholder="Enter certificate ID (e.g., UI-2024-001)"
+                    placeholder="Enter certificate ID (e.g., ITERA-2025-001)"
                     className="flex-1 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
                   />
                   <button
@@ -267,7 +267,7 @@ export default function VerifyPage() {
                   name="certificateId"
                   value={certificateId}
                   onChange={(e) => setCertificateId(e.target.value)}
-                  placeholder="Enter certificate ID (e.g., UI-2024-001)"
+                  placeholder="Enter certificate ID (e.g., ITERA-2025-001)"
                   className="flex-1 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
                 />
                 <button
