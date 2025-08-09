@@ -345,7 +345,7 @@ export default function Home() {
             {/* Floating badge dengan glow effect */}
             <div className="mb-6 sm:mb-8 inline-flex items-center px-4 py-3 rounded-full bg-white/20 backdrop-blur-xl border border-white/30 shadow-2xl animate-float-gentle hover:scale-110 transition-all duration-500">
               <div className="w-2 h-2 bg-blue-500 rounded-full mr-2 animate-pulse"></div>
-              <span className="text-slate-700 font-semibold text-sm sm:text-base bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              <span className="font-semibold text-sm sm:text-base bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                 🚀 Teknologi Blockchain Terdepan
               </span>
               <div className="w-2 h-2 bg-purple-500 rounded-full ml-2 animate-pulse animation-delay-1000"></div>
@@ -356,7 +356,7 @@ export default function Home() {
               <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black tracking-tight text-slate-900 mb-4 animate-text-reveal">
                 Verifikasi Sertifikat dengan{' '}
                 <span className="relative inline-block">
-                  <span className="bg-gradient-to-r from-blue-600 via-purple-600 via-pink-500 to-indigo-600 bg-clip-text text-transparent animate-gradient-xy bg-300% filter drop-shadow-lg">
+                  <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent animate-gradient-xy bg-300% filter drop-shadow-lg">
                     Blockchain
                   </span>
                   {/* Multiple decorative lines */}
@@ -509,7 +509,7 @@ export default function Home() {
       <section className="py-20 bg-white/80 backdrop-blur-xl border-y border-white/20 relative z-10">
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 mb-6 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-6 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
               Cara Kerja NFTicate
             </h2>
             <p className="text-xl text-slate-600 max-w-3xl mx-auto">

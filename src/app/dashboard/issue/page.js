@@ -764,7 +764,7 @@ export default function IssueCertificate() {
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="email@example.com"
                 />
-                <p className="text-xs text-slate-500 mt-1">Email ini penting agar student bisa melihat sertifikat di "My Certificates"</p>
+                <p className="text-xs text-slate-500 mt-1">Email ini penting agar student bisa melihat sertifikat di &quot;My Certificates&quot;</p>
               </div>
             </div>
           </div>

@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useAuth } from "../../contexts/AuthContext";
 import { getCertificate, logCertificateVerification, getOrganization } from "../../lib/database";
 import DashboardLayout from "../../components/DashboardLayout";
@@ -445,9 +446,9 @@ export default function VerifyPage() {
               <a href="/login" className="text-slate-600 hover:text-blue-600 px-3 py-2 text-sm font-medium">
                 Login
               </a>
-              <a href="/" className="text-slate-600 hover:text-blue-600 px-3 py-2 text-sm font-medium">
+              <Link href="/" className="text-slate-600 hover:text-blue-600 px-3 py-2 text-sm font-medium">
                 ← Back to Home
-              </a>
+              </Link>
             </div>
           </div>
         </div>

@@ -644,7 +644,7 @@ export default function ProgramCertificatesPage() {
             </div>
             
             <p className="text-slate-600 mb-6">
-              Are you sure you want to delete <strong>"{certificateToDelete?.certificateInfo?.title || 'this certificate'}"</strong>? 
+              Are you sure you want to delete <strong>&quot;{certificateToDelete?.certificateInfo?.title || 'this certificate'}&quot;</strong>? 
               This action cannot be undone.
             </p>
             

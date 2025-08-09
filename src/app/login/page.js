@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useAuth } from "../../contexts/AuthContext";
 import { signInWithGoogle, signInWithEmail } from "../../lib/auth";
 
@@ -79,12 +80,12 @@ export default function LoginPage() {
           <div className="sm:mx-auto sm:w-full sm:max-w-md">
             {/* Logo */}
             <div className="flex justify-center mb-6">
-              <a href="/" className="flex items-center group">
+              <Link href="/" className="flex items-center group">
                 <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-all duration-300">
                   <span className="text-white font-bold text-xl">N</span>
                 </div>
                 <span className="ml-3 text-2xl font-black bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">NFTicate</span>
-              </a>
+              </Link>
             </div>
 
             <h2 className="text-center text-2xl font-black bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent mb-3">
@@ -180,9 +181,9 @@ export default function LoginPage() {
                 </div>
 
                 <div className="text-sm">
-                  <a href="/forgot-password" className="font-semibold text-blue-600 hover:text-blue-700 transition-colors duration-300">
+                  <Link href="/forgot-password" className="font-semibold text-blue-600 hover:text-blue-700 transition-colors duration-300">
                     Forgot password?
-                  </a>
+                  </Link>
                 </div>
               </div>
 
@@ -202,10 +203,10 @@ export default function LoginPage() {
             {/* Sign Up Link */}
             <div className="mt-6 text-center">
               <p className="text-sm text-slate-600">
-                Don't have an account?{' '}
-                <a href="/register" className="font-bold text-blue-600 hover:text-blue-700 transition-colors duration-300">
+                Don&apos;t have an account?{' '}
+                <Link href="/register" className="font-bold text-blue-600 hover:text-blue-700 transition-colors duration-300">
                   Sign up here
-                </a>
+                </Link>
               </p>
             </div>
 
@@ -220,9 +221,9 @@ export default function LoginPage() {
 
         {/* Back to Home */}
         <div className="mt-6 text-center">
-          <a href="/" className="text-slate-500 hover:text-slate-700 text-sm font-medium transition-colors duration-300 hover:scale-105 inline-block">
+          <Link href="/" className="text-slate-500 hover:text-slate-700 text-sm font-medium transition-colors duration-300 hover:scale-105 inline-block">
             ← Back to Home
-          </a>
+          </Link>
         </div>
       </div>
     </div>

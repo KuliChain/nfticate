@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useAuth } from "../../contexts/AuthContext";
 import { resetPassword } from "../../lib/auth";
 
@@ -73,19 +74,19 @@ export default function ForgotPasswordPage() {
           <div className="sm:mx-auto sm:w-full sm:max-w-md">
             {/* Logo */}
             <div className="flex justify-center mb-6">
-              <a href="/" className="flex items-center group">
+              <Link href="/" className="flex items-center group">
                 <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-all duration-300">
                   <span className="text-white font-bold text-xl">N</span>
                 </div>
                 <span className="ml-3 text-2xl font-black bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">NFTicate</span>
-              </a>
+              </Link>
             </div>
 
             <h2 className="text-center text-2xl font-black bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent mb-3">
               Reset Password
             </h2>
             <p className="text-center text-base text-slate-600 mb-6 leading-relaxed">
-              Enter your email address and we'll send you a link to reset your password
+              Enter your email address and we&apos;ll send you a link to reset your password
             </p>
 
             {/* Error Message */}
@@ -147,7 +148,7 @@ export default function ForgotPasswordPage() {
             {/* Help Info */}
             <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100">
               <p className="text-sm text-blue-800 text-center font-medium">
-                <strong>Need help?</strong> Contact support if you don't receive the reset email within a few minutes
+                <strong>Need help?</strong> Contact support if you don&apos;t receive the reset email within a few minutes
               </p>
             </div>
           </div>
@@ -155,9 +156,9 @@ export default function ForgotPasswordPage() {
 
         {/* Back to Home */}
         <div className="mt-6 text-center">
-          <a href="/" className="text-slate-500 hover:text-slate-700 text-sm font-medium transition-colors duration-300 hover:scale-105 inline-block">
+          <Link href="/" className="text-slate-500 hover:text-slate-700 text-sm font-medium transition-colors duration-300 hover:scale-105 inline-block">
             ← Back to Home
-          </a>
+          </Link>
         </div>
       </div>
     </div>
