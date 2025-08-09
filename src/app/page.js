@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { getCertificate, logCertificateVerification } from "../lib/database";
+import { getCertificate, logCertificateVerification, getOrganization } from "../lib/database";
 
 export default function Home() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -14,6 +14,7 @@ export default function Home() {
   const [showScannerModal, setShowScannerModal] = useState(false);
   const [scannerError, setScannerError] = useState('');
   const [scannerStatus, setScannerStatus] = useState('idle'); // idle, checking, ready, error
+  const [isQRReady, setIsQRReady] = useState(false);
 
   // Scroll effect untuk parallax
   useEffect(() => {
@@ -39,6 +40,15 @@ export default function Home() {
       if (result.success) {
         const certificate = result.data;
         
+        // Get organization information if organizationId exists
+        let organization = null;
+        if (certificate.organizationId) {
+          const orgResult = await getOrganization(certificate.organizationId);
+          if (orgResult.success) {
+            organization = orgResult.data;
+          }
+        }
+        
         await logCertificateVerification(certificateId, {
           ipAddress: "unknown",
           userAgent: navigator.userAgent,
@@ -48,6 +58,7 @@ export default function Home() {
         setVerificationResult({
           success: true,
           certificate: certificate,
+          organization: organization,
           verifiedAt: new Date().toLocaleString()
         });
         setShowModal(true);
@@ -80,79 +91,133 @@ export default function Home() {
     setShowScannerModal(true);
     setScannerStatus('idle');
     setScannerError('');
+    setIsQRReady(false);
   };
 
   const checkCameraAccess = async () => {
+    setScannerStatus('checking');
+    setScannerError('');
+    
     try {
-      setScannerStatus('checking');
-      setScannerError('');
-      
-      // Check if browser supports camera API
+      // Check if getUserMedia is supported
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        throw new Error('UNSUPPORTED_BROWSER');
+        throw new Error('Camera tidak didukung pada perangkat ini');
       }
-
-      // Check camera permissions first
-      try {
-        const permissions = await navigator.permissions.query({ name: 'camera' });
-        if (permissions.state === 'denied') {
-          throw new Error('PERMISSION_DENIED');
-        }
-      } catch (permError) {
-        // Some browsers don't support permissions API, continue anyway
-        console.log("Permissions API not supported, continuing...");
-      }
-
-      // Try to access camera with constraints
+      
+      // Request camera permission
       const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { 
-          facingMode: 'environment', // Prefer back camera for QR scanning
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
-        } 
+        video: { facingMode: 'environment' } // Prefer back camera
       });
       
-      // Immediately stop the stream since we're using placeholder implementation
-      stream.getTracks().forEach(track => {
-        track.stop();
-        console.log(`Stopped ${track.kind} track:`, track.label);
-      });
+      // Stop the stream immediately as QrScanner will handle it
+      stream.getTracks().forEach(track => track.stop());
       
       setScannerStatus('ready');
-      
     } catch (error) {
-      console.error("Camera access error:", error);
+      console.error('Camera access error:', error);
+      let errorMessage = 'Gagal mengakses kamera. ';
       
-      let errorMessage = "Terjadi kesalahan saat mengakses kamera.";
-      
-      switch (error.name || error.message) {
-        case 'NotAllowedError':
-        case 'PERMISSION_DENIED':
-          errorMessage = "Akses kamera ditolak. Silakan izinkan akses kamera di pengaturan browser.";
-          break;
-        case 'NotFoundError':
-          errorMessage = "Kamera tidak ditemukan. Pastikan device memiliki kamera yang tersedia.";
-          break;
-        case 'NotReadableError':
-          errorMessage = "Kamera sedang digunakan oleh aplikasi lain. Silakan tutup aplikasi lain yang menggunakan kamera.";
-          break;
-        case 'OverconstrainedError':
-          errorMessage = "Kamera tidak mendukung resolusi yang diminta.";
-          break;
-        case 'NotSupportedError':
-        case 'UNSUPPORTED_BROWSER':
-          errorMessage = "Browser tidak mendukung akses kamera. Silakan gunakan browser modern seperti Chrome, Firefox, atau Safari.";
-          break;
-        case 'AbortError':
-          errorMessage = "Akses kamera dibatalkan.";
-          break;
-        default:
-          errorMessage = `Gagal mengakses kamera: ${error.message || 'Unknown error'}`;
+      if (error.name === 'NotAllowedError') {
+        errorMessage += 'Izin kamera ditolak. Silakan izinkan akses kamera di pengaturan browser.';
+      } else if (error.name === 'NotFoundError') {
+        errorMessage += 'Kamera tidak ditemukan. Pastikan perangkat memiliki kamera.';
+      } else if (error.name === 'NotReadableError') {
+        errorMessage += 'Kamera sedang digunakan aplikasi lain.';
+      } else {
+        errorMessage += error.message || 'Terjadi kesalahan tidak dikenal.';
       }
       
       setScannerError(errorMessage);
       setScannerStatus('error');
     }
+  };
+
+  // QR Scanner functions
+  const handleQRScan = (result) => {
+    if (result) {
+      let scannedId = result;
+      
+      // Extract certificate ID from URL if it's a full URL
+      if (result.includes('/verify/')) {
+        scannedId = result.split('/verify/').pop();
+      }
+      
+      // Try to parse as JSON if it's structured data
+      try {
+        const parsed = JSON.parse(result);
+        if (parsed.certificateId) {
+          scannedId = parsed.certificateId;
+        }
+      } catch (e) {
+        // Not JSON, use as is
+      }
+      
+      setCertificateId(scannedId.trim());
+      setShowScannerModal(false);
+      
+      // Auto-trigger verification
+      setTimeout(async () => {
+        const fakeEvent = { preventDefault: () => {} };
+        await handleVerification(fakeEvent);
+      }, 100);
+    }
+  };
+
+  const handleQRError = (error) => {
+    console.warn("QR Scanner Error:", error);
+    setScannerError("Gagal mengakses kamera. Silakan masukkan ID sertifikat secara manual.");
+    setScannerStatus('error');
+  };
+
+  // QR Scanner Modal Component
+  const QRScannerModal = () => {
+    const [QrScanner, setQrScanner] = useState(null);
+
+    useEffect(() => {
+      // Dynamic import untuk QR Scanner
+      import('qr-scanner').then((module) => {
+        setQrScanner(() => module.default);
+        setIsQRReady(true);
+        setScannerStatus('ready');
+      }).catch((err) => {
+        console.error("QR Scanner not available:", err);
+        setScannerError("QR Scanner tidak didukung pada perangkat ini");
+        setScannerStatus('error');
+      });
+    }, []);
+
+    useEffect(() => {
+      if (!QrScanner || !showScannerModal) return;
+
+      const videoElement = document.getElementById('home-qr-video');
+      if (!videoElement) return;
+
+      const qrScanner = new QrScanner(
+        videoElement,
+        (result) => handleQRScan(result.data),
+        {
+          onDecodeError: (error) => {
+            // Silent - just keep scanning
+          },
+          highlightScanRegion: true,
+          highlightCodeOutline: true,
+        }
+      );
+
+      qrScanner.start().catch(handleQRError);
+
+      return () => {
+        qrScanner.destroy();
+      };
+    }, [QrScanner, showScannerModal]);
+
+    if (!showScannerModal) return null;
+    
+    return (
+      <div className="hidden">
+        {/* This component handles the QR scanner initialization */}
+      </div>
+    );
   };
 
   const handleManualInput = (inputValue) => {
@@ -624,16 +689,30 @@ export default function Home() {
 
                     {scannerStatus === 'ready' && (
                       <div className="space-y-4">
-                        <div className="w-16 h-16 mx-auto bg-green-100 rounded-full flex items-center justify-center">
-                          <svg className="w-8 h-8 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                          </svg>
+                        <p className="text-green-600 font-semibold text-center">📹 Arahkan kamera ke QR Code</p>
+                        <div className="relative bg-black rounded-2xl overflow-hidden">
+                          <video 
+                            id="home-qr-video" 
+                            className="w-full h-64 object-cover"
+                            playsInline
+                            muted
+                          />
+                          {!isQRReady && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
+                              <div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+                            </div>
+                          )}
+                          {/* Scanning overlay */}
+                          <div className="absolute inset-4 border-2 border-green-400 rounded-xl pointer-events-none">
+                            <div className="absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 border-green-400"></div>
+                            <div className="absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 border-green-400"></div>
+                            <div className="absolute bottom-0 left-0 w-6 h-6 border-b-4 border-l-4 border-green-400"></div>
+                            <div className="absolute bottom-0 right-0 w-6 h-6 border-b-4 border-r-4 border-green-400"></div>
+                          </div>
                         </div>
-                        <p className="text-green-600 font-semibold">Kamera siap!</p>
-                        <div className="p-4 bg-green-50 border border-green-200 rounded-xl">
-                          <p className="text-sm text-green-800">
-                            ✨ <strong>QR Scanner dalam pengembangan</strong><br/>
-                            Untuk saat ini, silakan gunakan input manual di bawah.
+                        <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                          <p className="text-sm text-blue-800 text-center">
+                            💡 <strong>Tips:</strong> Pastikan QR code terlihat jelas dan tidak terlalu jauh dari kamera
                           </p>
                         </div>
                       </div>
@@ -746,7 +825,7 @@ export default function Home() {
                       },
                       { 
                         label: '🏢 Institusi', 
-                        value: verificationResult.certificate.organizationInfo?.name || 'N/A' 
+                        value: verificationResult.organization?.name || 'N/A' 
                       },
                       { 
                         label: '🔖 ID Sertifikat', 
@@ -808,6 +887,9 @@ export default function Home() {
           </div>
         </div>
       )}
+
+      {/* QR Scanner Component */}
+      <QRScannerModal />
 
       {/* Super Luxury CSS Animations */}
       <style jsx>{`

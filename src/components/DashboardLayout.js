@@ -77,10 +77,7 @@ export default function DashboardLayout({ children }) {
         </svg>
       ),
       roles: ["admin", "superadmin"]
-    }
-  ];
-
-  const adminNavigation = [
+    },
     {
       name: "Manage Users",
       href: "/admin/users",
@@ -95,7 +92,6 @@ export default function DashboardLayout({ children }) {
 
   const userRole = userProfile?.role || "student";
   const visibleNavigation = navigation.filter(item => item.roles.includes(userRole));
-  const visibleAdminNavigation = adminNavigation.filter(item => item.roles.includes(userRole));
 
   // Don't render navigation until userProfile is loaded to prevent flickering
   if (!userProfile && user) {
@@ -134,38 +130,17 @@ export default function DashboardLayout({ children }) {
 
 
           {/* Navigation */}
-          <nav className="flex-1 px-4 py-4 space-y-2 overflow-y-auto min-h-0">
-            {/* Main Navigation */}
-            <div className="space-y-1">
-              {visibleNavigation.map((item) => (
-                <button
-                  key={item.name}
-                  onClick={() => router.push(item.href)}
-                  className="flex items-center w-full px-4 py-3 text-base font-medium text-slate-700 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 hover:text-blue-700 transition-all duration-300 text-left hover:scale-105 hover:shadow-sm"
-                >
-                  <span className="mr-3">{item.icon}</span>
-                  {item.name}
-                </button>
-              ))}
-            </div>
-
-            {/* Admin Navigation */}
-            {visibleAdminNavigation.length > 0 && (
-              <>
-                <div className="pt-4 space-y-1">
-                  {visibleAdminNavigation.map((item) => (
-                    <button
-                      key={item.name}
-                      onClick={() => router.push(item.href)}
-                      className="flex items-center w-full px-4 py-3 text-base font-medium text-slate-700 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 hover:text-blue-700 transition-all duration-300 text-left hover:scale-105 hover:shadow-sm"
-                    >
-                      <span className="mr-3">{item.icon}</span>
-                      {item.name}
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
+          <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto min-h-0">
+            {visibleNavigation.map((item) => (
+              <button
+                key={item.name}
+                onClick={() => router.push(item.href)}
+                className="flex items-center w-full px-4 py-3 text-base font-medium text-slate-700 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 hover:text-blue-700 transition-all duration-300 text-left hover:scale-105 hover:shadow-sm"
+              >
+                <span className="mr-3">{item.icon}</span>
+                {item.name}
+              </button>
+            ))}
           </nav>
 
           {/* Bottom section - User Profile & Logout */}
@@ -240,7 +215,7 @@ export default function DashboardLayout({ children }) {
         </div>
 
         {/* Page content */}
-        <main className="flex-1 p-6 lg:p-12 xl:p-16 overflow-y-auto">
+        <main className="flex-1 p-6 lg:p-8 overflow-y-auto">
           {children}
         </main>
       </div>

@@ -4,6 +4,10 @@ import { useRouter, useParams } from "next/navigation";
 import { useAuth } from "../../../../../contexts/AuthContext";
 import DashboardLayout from "../../../../../components/DashboardLayout";
 import { 
+  SkeletonPage,
+  useConsistentLoading 
+} from "../../../../../components/SkeletonLoader";
+import { 
   getOrganization,
   getCertificatesByOrganization
 } from "../../../../../lib/database";
@@ -19,6 +23,9 @@ export default function OrganizationProgramsPage() {
   const [programs, setPrograms] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+
+  // Use consistent loading hook
+  const showLoading = useConsistentLoading(isLoading);
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
@@ -56,14 +63,11 @@ export default function OrganizationProgramsPage() {
         const certs = certResult.data;
         setCertificates(certs);
 
-        // Group certificates by program/event (using certificateInfo.program or certificateInfo.event)
+        // Group certificates by certificate title
         const programMap = {};
         
         certs.forEach(cert => {
-          const program = cert.certificateInfo?.program || 
-                         cert.certificateInfo?.event || 
-                         cert.certificateInfo?.type || 
-                         "General Program";
+          const program = cert.certificateInfo?.title || "Untitled Certificate";
           
           if (!programMap[program]) {
             programMap[program] = {
@@ -98,11 +102,11 @@ export default function OrganizationProgramsPage() {
     }
   };
 
-  if (loading || isLoading) {
+  if (loading || showLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-      </div>
+      <DashboardLayout>
+        <SkeletonPage hasStats={true} hasTable={false} hasCards={true} />
+      </DashboardLayout>
     );
   }
 
@@ -143,7 +147,7 @@ export default function OrganizationProgramsPage() {
                 </div>
                 
                 <p className="text-slate-600 mt-2">
-                  Manage certificate programs and events for this organization
+                  View certificates grouped by title for this organization
                 </p>
               </>
             )}
@@ -221,7 +225,7 @@ export default function OrganizationProgramsPage() {
             <div className="bg-white rounded-xl border border-slate-200 p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-slate-600">Programs</p>
+                  <p className="text-sm font-medium text-slate-600">Certificate Types</p>
                   <p className="text-3xl font-bold text-purple-600">{programs.length}</p>
                 </div>
                 <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
@@ -319,7 +323,7 @@ export default function OrganizationProgramsPage() {
             <svg className="mx-auto h-12 w-12 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
             </svg>
-            <h3 className="mt-2 text-sm font-medium text-slate-900">No programs found</h3>
+            <h3 className="mt-2 text-sm font-medium text-slate-900">No certificates found</h3>
             <p className="mt-1 text-sm text-slate-500">
               No certificates have been issued for this organization yet.
             </p>

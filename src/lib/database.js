@@ -698,6 +698,34 @@ export const acceptInvitation = async (invitationId, userId) => {
   }
 };
 
+export const deleteInvitation = async (invitationId) => {
+  try {
+    // Get invitation data first
+    const invitationDoc = await getDoc(doc(db, "invitations", invitationId));
+    if (!invitationDoc.exists()) {
+      return { success: false, error: "Invitation not found" };
+    }
+
+    const invitationData = invitationDoc.data();
+    
+    // Delete from invitations collection
+    await deleteDoc(doc(db, "invitations", invitationId));
+    
+    // Also remove the temporary user record if it exists
+    const tempUserId = invitationData.email.replace(/[^a-zA-Z0-9]/g, '_');
+    try {
+      await deleteDoc(doc(db, "users", tempUserId));
+    } catch (error) {
+      console.log("Temp user record not found or already deleted");
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting invitation:", error);
+    return { success: false, error: error.message };
+  }
+};
+
 export const getAllUsers = async (includeInactive = false) => {
   try {
     let usersQuery;

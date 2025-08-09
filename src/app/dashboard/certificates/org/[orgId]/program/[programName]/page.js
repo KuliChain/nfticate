@@ -4,6 +4,11 @@ import { useRouter, useParams } from "next/navigation";
 import { useAuth } from "../../../../../../../contexts/AuthContext";
 import DashboardLayout from "../../../../../../../components/DashboardLayout";
 import { 
+  SkeletonPage,
+  SkeletonTable,
+  useConsistentLoading 
+} from "../../../../../../../components/SkeletonLoader";
+import { 
   getOrganization,
   getCertificatesByOrganization,
   deleteCertificate
@@ -26,6 +31,14 @@ export default function ProgramCertificatesPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [certificateToDelete, setCertificateToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [certificatesPerPage] = useState(10);
+  const [paginatedCertificates, setPaginatedCertificates] = useState([]);
+
+  // Use consistent loading hook
+  const showLoading = useConsistentLoading(isLoading);
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
@@ -48,6 +61,32 @@ export default function ProgramCertificatesPage() {
     filterCertificates();
   }, [certificates, filter, searchTerm]);
 
+  useEffect(() => {
+    // Apply pagination when current page changes
+    const startIndex = (currentPage - 1) * certificatesPerPage;
+    const endIndex = startIndex + certificatesPerPage;
+    setPaginatedCertificates(filteredCertificates.slice(startIndex, endIndex));
+  }, [filteredCertificates, currentPage, certificatesPerPage]);
+
+  const totalPages = Math.ceil(filteredCertificates.length / certificatesPerPage);
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  const handleDownload = (certificate) => {
+    if (certificate.fileUrls?.certificate) {
+      const link = document.createElement('a');
+      link.href = certificate.fileUrls.certificate;
+      link.download = `${certificate.certificateInfo?.title || 'Certificate'}-${certificate.id}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } else {
+      alert('Certificate file not found');
+    }
+  };
+
   const loadProgramCertificates = async () => {
     setIsLoading(true);
     setError("");
@@ -64,12 +103,9 @@ export default function ProgramCertificatesPage() {
       // Load certificates for this organization
       const certResult = await getCertificatesByOrganization(orgId);
       if (certResult.success) {
-        // Filter certificates for this specific program
+        // Filter certificates for this specific certificate title
         const programCertificates = certResult.data.filter(cert => {
-          const certProgram = cert.certificateInfo?.program || 
-                            cert.certificateInfo?.event || 
-                            cert.certificateInfo?.type || 
-                            "General Program";
+          const certProgram = cert.certificateInfo?.title || "Untitled Certificate";
           return certProgram === programName;
         });
 
@@ -90,7 +126,14 @@ export default function ProgramCertificatesPage() {
 
     // Apply status filter
     if (filter !== "all") {
-      filtered = filtered.filter(cert => cert.status === filter);
+      if (filter === "verified") {
+        filtered = filtered.filter(cert => !isExpired(cert.expiryDate));
+      } else if (filter === "expired") {
+        filtered = filtered.filter(cert => isExpired(cert.expiryDate));
+      } else if (filter === "pending") {
+        // For now, treating all active certificates as verified
+        filtered = [];
+      }
     }
 
     // Apply search filter
@@ -105,6 +148,12 @@ export default function ProgramCertificatesPage() {
     }
 
     setFilteredCertificates(filtered);
+    setCurrentPage(1); // Reset to first page when filters change
+    
+    // Apply pagination
+    const startIndex = 0;
+    const endIndex = certificatesPerPage;
+    setPaginatedCertificates(filtered.slice(startIndex, endIndex));
   };
 
   const formatDate = (timestamp) => {
@@ -154,11 +203,11 @@ export default function ProgramCertificatesPage() {
     }
   };
 
-  if (loading || isLoading) {
+  if (loading || showLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-      </div>
+      <DashboardLayout>
+        <SkeletonPage hasStats={true} hasTable={true} hasCards={false} />
+      </DashboardLayout>
     );
   }
 
@@ -199,7 +248,7 @@ export default function ProgramCertificatesPage() {
             </div>
             
             <p className="text-slate-600 mt-2">
-              View and manage individual certificates issued under this program
+              View and manage individual certificates with this title
             </p>
           </div>
 
@@ -340,9 +389,6 @@ export default function ProgramCertificatesPage() {
                       Certificate Title
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                       Issue Date
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
@@ -354,7 +400,7 @@ export default function ProgramCertificatesPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-slate-200">
-                  {filteredCertificates.map((certificate) => (
+                  {paginatedCertificates.map((certificate) => (
                     <tr key={certificate.id} className="hover:bg-slate-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
@@ -376,17 +422,15 @@ export default function ProgramCertificatesPage() {
                       <td className="px-6 py-4">
                         <div className="text-sm text-slate-900">
                           {certificate.certificateInfo?.title || "Untitled Certificate"}
+                          {isExpired(certificate.expiryDate) && (
+                            <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                              Expired
+                            </span>
+                          )}
                         </div>
                         <div className="text-sm text-slate-500 font-mono">
                           ID: {certificate.id}
                         </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {isExpired(certificate.expiryDate) && (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                            Expired
-                          </span>
-                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
                         {formatDate(certificate.certificateInfo?.issueDate)}
@@ -394,41 +438,168 @@ export default function ProgramCertificatesPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
                         {certificate.verificationCount || 0} times
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                        <button
-                          onClick={() => router.push(`/verify/${certificate.id}`)}
-                          className="text-blue-600 hover:text-blue-700"
-                        >
-                          Verify
-                        </button>
-                        <button
-                          onClick={() => router.push(`/dashboard/certificates/${certificate.id}`)}
-                          className="text-green-600 hover:text-green-700"
-                        >
-                          View
-                        </button>
-                        {certificate.fileUrls?.certificate && (
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div className="flex items-center space-x-2">
                           <button
-                            onClick={() => window.open(certificate.fileUrls.certificate, '_blank')}
-                            className="text-purple-600 hover:text-purple-700"
+                            onClick={() => {
+                              // Navigate to verify page with certificate ID in URL params
+                              router.push(`/verify?id=${certificate.id}`);
+                            }}
+                            className="inline-flex items-center px-3 py-1.5 bg-blue-100 text-blue-700 text-sm font-medium rounded-lg hover:bg-blue-200 transition-colors"
+                            title="Verify Certificate"
                           >
-                            Download
+                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                            </svg>
+                            Verify
                           </button>
-                        )}
-                        {(isSuperAdmin || isAdmin) && (
+                          
                           <button
-                            onClick={() => handleDeleteClick(certificate)}
-                            className="text-red-600 hover:text-red-700"
+                            onClick={() => {
+                              if (certificate.fileUrls?.certificate) {
+                                window.open(certificate.fileUrls.certificate, '_blank');
+                              } else {
+                                alert('Certificate file not available');
+                              }
+                            }}
+                            className="inline-flex items-center px-3 py-1.5 bg-green-100 text-green-700 text-sm font-medium rounded-lg hover:bg-green-200 transition-colors"
+                            title="View Certificate"
                           >
-                            Delete
+                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                            View
                           </button>
-                        )}
+                          
+                          {certificate.fileUrls?.certificate && (
+                            <button
+                              onClick={() => handleDownload(certificate)}
+                              className="inline-flex items-center px-3 py-1.5 bg-purple-100 text-purple-700 text-sm font-medium rounded-lg hover:bg-purple-200 transition-colors"
+                              title="Download Certificate"
+                            >
+                              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                              </svg>
+                              Download
+                            </button>
+                          )}
+                          
+                          {(isSuperAdmin || isAdmin) && (
+                            <button
+                              onClick={() => handleDeleteClick(certificate)}
+                              className="inline-flex items-center px-3 py-1.5 bg-red-100 text-red-700 text-sm font-medium rounded-lg hover:bg-red-200 transition-colors"
+                              title="Delete Certificate"
+                            >
+                              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                              Delete
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
+            
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="bg-white px-4 py-3 border-t border-slate-200 sm:px-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1 flex justify-between sm:hidden">
+                    <button
+                      onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                      disabled={currentPage === 1}
+                      className="relative inline-flex items-center px-4 py-2 border border-slate-300 text-sm font-medium rounded-md text-slate-700 bg-white hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Previous
+                    </button>
+                    <button
+                      onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+                      disabled={currentPage === totalPages}
+                      className="ml-3 relative inline-flex items-center px-4 py-2 border border-slate-300 text-sm font-medium rounded-md text-slate-700 bg-white hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Next
+                    </button>
+                  </div>
+                  <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-sm text-slate-700">
+                        Showing{' '}
+                        <span className="font-medium">{(currentPage - 1) * certificatesPerPage + 1}</span>{' '}
+                        to{' '}
+                        <span className="font-medium">
+                          {Math.min(currentPage * certificatesPerPage, filteredCertificates.length)}
+                        </span>{' '}
+                        of{' '}
+                        <span className="font-medium">{filteredCertificates.length}</span>{' '}
+                        results
+                      </p>
+                    </div>
+                    <div>
+                      <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                        <button
+                          onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                          disabled={currentPage === 1}
+                          className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-slate-300 bg-white text-sm font-medium text-slate-500 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                          </svg>
+                        </button>
+                        
+                        {[...Array(totalPages)].map((_, index) => {
+                          const page = index + 1;
+                          const isCurrentPage = page === currentPage;
+                          const shouldShow = 
+                            page === 1 || 
+                            page === totalPages || 
+                            (page >= currentPage - 2 && page <= currentPage + 2);
+                          
+                          if (!shouldShow) {
+                            if (page === currentPage - 3 || page === currentPage + 3) {
+                              return (
+                                <span key={page} className="relative inline-flex items-center px-4 py-2 border border-slate-300 bg-white text-sm font-medium text-slate-700">
+                                  ...
+                                </span>
+                              );
+                            }
+                            return null;
+                          }
+                          
+                          return (
+                            <button
+                              key={page}
+                              onClick={() => handlePageChange(page)}
+                              className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+                                isCurrentPage
+                                  ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
+                                  : 'bg-white border-slate-300 text-slate-500 hover:bg-slate-50'
+                              }`}
+                            >
+                              {page}
+                            </button>
+                          );
+                        })}
+                        
+                        <button
+                          onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+                          disabled={currentPage === totalPages}
+                          className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-slate-300 bg-white text-sm font-medium text-slate-500 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </button>
+                      </nav>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <div className="text-center py-12">

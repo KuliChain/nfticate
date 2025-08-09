@@ -4,12 +4,19 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "../../../contexts/AuthContext";
 import DashboardLayout from "../../../components/DashboardLayout";
 import { 
+  SkeletonPage,
+  SkeletonTable,
+  SkeletonStats,
+  useConsistentLoading 
+} from "../../../components/SkeletonLoader";
+import { 
   getAllUsers,
   getAllOrganizations,
   createUserInvitation,
   updateUserRole,
   deactivateUser,
   getPendingInvitations,
+  deleteInvitation,
   getUserStats
 } from "../../../lib/database";
 
@@ -27,6 +34,9 @@ export default function UsersPage() {
   const [success, setSuccess] = useState("");
   const [selectedRole, setSelectedRole] = useState("all");
   const [activeTab, setActiveTab] = useState("users"); // users, invitations, stats
+
+  // Use consistent loading hook
+  const showLoading = useConsistentLoading(loading || isLoading);
 
   const [formData, setFormData] = useState({
     email: "",
@@ -136,15 +146,28 @@ export default function UsersPage() {
     }
   };
 
+  const handleDeleteInvitation = async (invitationId, email) => {
+    if (window.confirm(`Are you sure you want to delete the invitation for ${email}?`)) {
+      const result = await deleteInvitation(invitationId);
+      
+      if (result.success) {
+        setSuccess("Invitation deleted successfully!");
+        loadAllData();
+      } else {
+        setError("Failed to delete invitation: " + result.error);
+      }
+    }
+  };
+
   const filteredUsers = selectedRole === "all" 
     ? users 
     : users.filter(user => user.role === selectedRole);
 
-  if (loading || !isSuperAdmin) {
+  if (showLoading || !isSuperAdmin) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-      </div>
+      <DashboardLayout>
+        <SkeletonPage hasStats={true} hasTable={true} hasCards={false} />
+      </DashboardLayout>
     );
   }
 
@@ -580,6 +603,12 @@ export default function UsersPage() {
                             className="text-blue-600 hover:text-blue-800 px-3 py-2 text-sm font-medium"
                           >
                             Resend
+                          </button>
+                          <button
+                            onClick={() => handleDeleteInvitation(invitation.id, invitation.email)}
+                            className="text-red-600 hover:text-red-800 px-3 py-2 text-sm font-medium"
+                          >
+                            Delete
                           </button>
                         </div>
                       </div>

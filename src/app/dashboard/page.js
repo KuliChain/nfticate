@@ -4,6 +4,10 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "../../contexts/AuthContext";
 import DashboardLayout from "../../components/DashboardLayout";
 import { 
+  SkeletonPage,
+  useConsistentLoading 
+} from "../../components/SkeletonLoader";
+import { 
   getCertificatesByRecipient, 
   getCertificatesByOrganization, 
   getVerificationLogs 
@@ -16,6 +20,9 @@ export default function Dashboard() {
   // Recent activity state
   const [recentActivities, setRecentActivities] = useState([]);
   const [activitiesLoading, setActivitiesLoading] = useState(true);
+
+  // Use consistent loading hook
+  const showLoading = useConsistentLoading(activitiesLoading);
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
@@ -168,6 +175,14 @@ export default function Dashboard() {
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
       </div>
+    );
+  }
+
+  if (loading || showLoading) {
+    return (
+      <DashboardLayout>
+        <SkeletonPage hasStats={false} hasTable={false} hasCards={false} />
+      </DashboardLayout>
     );
   }
 

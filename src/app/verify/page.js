@@ -1,9 +1,10 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../contexts/AuthContext";
-import { getCertificate, logCertificateVerification } from "../../lib/database";
+import { getCertificate, logCertificateVerification, getOrganization } from "../../lib/database";
 import DashboardLayout from "../../components/DashboardLayout";
+import { useConsistentLoading } from "../../components/SkeletonLoader";
 
 export default function VerifyPage() {
   const { user, userProfile, loading, isAuthenticated } = useAuth();
@@ -12,10 +13,25 @@ export default function VerifyPage() {
   const [isVerifying, setIsVerifying] = useState(false);
   const [verificationResult, setVerificationResult] = useState(null);
   const [error, setError] = useState("");
+  const [showQRScanner, setShowQRScanner] = useState(false);
+  const [isQRReady, setIsQRReady] = useState(false);
 
-  const handleVerification = async (e) => {
-    e.preventDefault();
-    if (!certificateId.trim()) {
+  // Use consistent loading hook
+  const showLoading = useConsistentLoading(isVerifying);
+
+  // Check for certificate ID in URL parameters
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const idParam = urlParams.get('id');
+    if (idParam) {
+      setCertificateId(idParam);
+      // Automatically verify if ID is provided in URL
+      handleVerificationById(idParam);
+    }
+  }, []);
+
+  const handleVerificationById = async (id) => {
+    if (!id.trim()) {
       setError("Please enter a certificate ID");
       return;
     }
@@ -26,21 +42,31 @@ export default function VerifyPage() {
 
     try {
       // Get certificate from database
-      const result = await getCertificate(certificateId.trim());
+      const result = await getCertificate(id.trim());
       
       if (result.success) {
         const certificate = result.data;
         
+        // Get organization information if organizationId exists
+        let organization = null;
+        if (certificate.organizationId) {
+          const orgResult = await getOrganization(certificate.organizationId);
+          if (orgResult.success) {
+            organization = orgResult.data;
+          }
+        }
+        
         // Log the verification
-        await logCertificateVerification(certificateId, {
+        await logCertificateVerification(id, {
           ipAddress: "unknown", // In production, get real IP
           userAgent: navigator.userAgent,
           location: "unknown"
         });
-
+        
         setVerificationResult({
           isValid: true,
-          certificate,
+          certificate: certificate,
+          organization: organization,
           verifiedAt: new Date().toISOString()
         });
       } else {
@@ -57,9 +83,126 @@ export default function VerifyPage() {
     }
   };
 
+  const handleVerification = async (e) => {
+    e.preventDefault();
+    await handleVerificationById(certificateId);
+  };
+
+
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
     return new Date(dateString).toLocaleDateString();
+  };
+
+  // QR Scanner functions
+  const handleQRScan = (result) => {
+    if (result) {
+      let scannedId = result;
+      
+      // Extract certificate ID from URL if it's a full URL
+      if (result.includes('/verify/')) {
+        scannedId = result.split('/verify/').pop();
+      }
+      
+      // Try to parse as JSON if it's structured data
+      try {
+        const parsed = JSON.parse(result);
+        if (parsed.certificateId) {
+          scannedId = parsed.certificateId;
+        }
+      } catch (e) {
+        // Not JSON, use as is
+      }
+      
+      setCertificateId(scannedId.trim());
+      setShowQRScanner(false);
+      
+      // Auto-trigger verification
+      setTimeout(async () => {
+        const fakeEvent = { preventDefault: () => {} };
+        await handleVerification(fakeEvent);
+      }, 100);
+    }
+  };
+
+  const handleQRError = (error) => {
+    console.warn("QR Scanner Error:", error);
+    setError("Failed to access camera. Please enter certificate ID manually.");
+    setShowQRScanner(false);
+  };
+
+  const QRScannerModal = () => {
+    const [QrScanner, setQrScanner] = useState(null);
+
+    useEffect(() => {
+      // Dynamic import untuk QR Scanner
+      import('qr-scanner').then((module) => {
+        setQrScanner(() => module.default);
+        setIsQRReady(true);
+      }).catch((err) => {
+        console.error("QR Scanner not available:", err);
+        setError("QR Scanner not supported on this device");
+        setShowQRScanner(false);
+      });
+    }, []);
+
+    useEffect(() => {
+      if (!QrScanner || !showQRScanner) return;
+
+      const videoElement = document.getElementById('qr-video');
+      if (!videoElement) return;
+
+      const qrScanner = new QrScanner(
+        videoElement,
+        (result) => handleQRScan(result.data),
+        {
+          onDecodeError: (error) => {
+            // Silent - just keep scanning
+          },
+          highlightScanRegion: true,
+          highlightCodeOutline: true,
+        }
+      );
+
+      qrScanner.start().catch(handleQRError);
+
+      return () => {
+        qrScanner.destroy();
+      };
+    }, [QrScanner, showQRScanner]);
+
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75">
+        <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4">
+          <div className="text-center mb-4">
+            <h3 className="text-xl font-bold text-slate-900">Scan QR Code</h3>
+            <p className="text-slate-600">Point your camera at the certificate QR code</p>
+          </div>
+          
+          <div className="relative bg-black rounded-xl overflow-hidden mb-4">
+            <video 
+              id="qr-video" 
+              className="w-full h-64 object-cover"
+              playsInline
+            />
+            {!isQRReady && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            )}
+          </div>
+          
+          <div className="flex space-x-3">
+            <button
+              onClick={() => setShowQRScanner(false)}
+              className="flex-1 px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   };
 
 
@@ -109,6 +252,16 @@ export default function VerifyPage() {
                     className="flex-1 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
                   />
                   <button
+                    type="button"
+                    onClick={() => setShowQRScanner(true)}
+                    className="px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center"
+                    title="Scan QR Code"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                    </svg>
+                  </button>
+                  <button
                     type="submit"
                     disabled={isVerifying || !certificateId.trim()}
                     className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
@@ -134,8 +287,49 @@ export default function VerifyPage() {
             </form>
           </div>
 
+          {/* Loading State */}
+          {showLoading && !verificationResult && (
+            <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-8">
+              <div className="animate-pulse">
+                {/* Loading Header */}
+                <div className="text-center mb-8">
+                  <div className="w-20 h-20 mx-auto bg-slate-200 rounded-full mb-4"></div>
+                  <div className="h-6 bg-slate-200 rounded w-48 mx-auto mb-2"></div>
+                  <div className="h-4 bg-slate-200 rounded w-64 mx-auto"></div>
+                </div>
+                
+                {/* Loading Content */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div>
+                    <div className="h-5 bg-slate-200 rounded w-32 mb-4"></div>
+                    <div className="space-y-3">
+                      <div className="h-4 bg-slate-200 rounded w-full"></div>
+                      <div className="h-4 bg-slate-200 rounded w-3/4"></div>
+                      <div className="h-4 bg-slate-200 rounded w-5/6"></div>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="h-5 bg-slate-200 rounded w-32 mb-4"></div>
+                    <div className="space-y-3">
+                      <div className="h-4 bg-slate-200 rounded w-full"></div>
+                      <div className="h-4 bg-slate-200 rounded w-2/3"></div>
+                      <div className="h-4 bg-slate-200 rounded w-4/5"></div>
+                    </div>
+                  </div>
+                  <div>
+                    <div className="h-5 bg-slate-200 rounded w-32 mb-4"></div>
+                    <div className="space-y-3">
+                      <div className="h-4 bg-slate-200 rounded w-full"></div>
+                      <div className="h-4 bg-slate-200 rounded w-1/2"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Verification Result */}
-          {verificationResult && (
+          {verificationResult && !showLoading && (
             <div className="bg-white rounded-2xl shadow-lg border border-slate-200 p-8">
               {verificationResult.isValid ? (
                 <div>
@@ -151,7 +345,7 @@ export default function VerifyPage() {
                   </div>
 
                   {/* Certificate Details */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div>
                       <h3 className="text-lg font-semibold text-slate-900 mb-4">Certificate Information</h3>
                       <div className="space-y-3">
@@ -187,6 +381,20 @@ export default function VerifyPage() {
                         </div>
                       </div>
                     </div>
+
+                    <div>
+                      <h3 className="text-lg font-semibold text-slate-900 mb-4">Issuing Organization</h3>
+                      <div className="space-y-3">
+                        <div>
+                          <label className="block text-sm font-medium text-slate-700">Organization Name</label>
+                          <p className="text-slate-900">{verificationResult.organization?.name || "N/A"}</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-slate-700">Organization Type</label>
+                          <p className="text-slate-900 capitalize">{verificationResult.organization?.type || "N/A"}</p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
                   {/* Certificate ID */}
@@ -213,6 +421,9 @@ export default function VerifyPage() {
             </div>
           )}
         </div>
+        
+        {/* QR Scanner Modal */}
+        {showQRScanner && <QRScannerModal />}
       </DashboardLayout>
     );
   }
@@ -271,6 +482,16 @@ export default function VerifyPage() {
                   className="flex-1 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
                 />
                 <button
+                  type="button"
+                  onClick={() => setShowQRScanner(true)}
+                  className="px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center"
+                  title="Scan QR Code"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                  </svg>
+                </button>
+                <button
                   type="submit"
                   disabled={isVerifying || !certificateId.trim()}
                   className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
@@ -323,6 +544,9 @@ export default function VerifyPage() {
             )}
           </div>
         )}
+        
+        {/* QR Scanner Modal */}
+        {showQRScanner && <QRScannerModal />}
       </main>
     </div>
   );

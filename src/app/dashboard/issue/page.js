@@ -3,6 +3,10 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../../contexts/AuthContext";
 import DashboardLayout from "../../../components/DashboardLayout";
+import { 
+  SkeletonPage,
+  useConsistentLoading 
+} from "../../../components/SkeletonLoader";
 import { createCertificate, getAllOrganizations } from "../../../lib/database";
 import { uploadFile } from "../../../lib/supabase";
 
@@ -17,6 +21,9 @@ export default function IssueCertificate() {
   const [organizations, setOrganizations] = useState([]);
   const [selectedOrgId, setSelectedOrgId] = useState("");
   const [loadingOrgs, setLoadingOrgs] = useState(false);
+
+  // Use consistent loading hook
+  const showLoading = useConsistentLoading(loading || loadingOrgs);
   
   // Single upload states
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -513,11 +520,11 @@ export default function IssueCertificate() {
     }
   };
 
-  if (loading) {
+  if (showLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-      </div>
+      <DashboardLayout>
+        <SkeletonPage hasStats={false} hasTable={false} hasCards={false} />
+      </DashboardLayout>
     );
   }
 
