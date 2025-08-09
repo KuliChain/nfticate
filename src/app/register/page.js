@@ -103,25 +103,31 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col justify-center">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/30 flex flex-col justify-center relative overflow-hidden">
+      {/* Background Decoration */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-full blur-3xl"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-r from-purple-400/20 to-pink-400/20 rounded-full blur-3xl"></div>
+      </div>
+      
+      <div className="relative z-10 sm:mx-auto sm:w-full sm:max-w-lg">
         {/* Register Form */}
-        <div className="bg-white py-12 px-8 shadow-xl rounded-2xl border border-slate-200">
+        <div className="bg-white/95 backdrop-blur-xl py-8 px-8 shadow-2xl rounded-3xl border border-white/20">
           <div className="sm:mx-auto sm:w-full sm:max-w-md">
             {/* Logo */}
-            <div className="flex justify-center mb-8">
-              <a href="/" className="flex items-center">
-                <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center">
-                  <span className="text-white font-bold text-2xl">N</span>
+            <div className="flex justify-center mb-6">
+              <a href="/" className="flex items-center group">
+                <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-all duration-300">
+                  <span className="text-white font-bold text-xl">N</span>
                 </div>
-                <span className="ml-3 text-2xl font-bold text-slate-800">NFTicate</span>
+                <span className="ml-3 text-2xl font-black bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">NFTicate</span>
               </a>
             </div>
 
-            <h2 className="text-center text-3xl font-bold text-slate-900 mb-2">
+            <h2 className="text-center text-2xl font-black bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent mb-3">
               Create Account
             </h2>
-            <p className="text-center text-slate-600 mb-8">
+            <p className="text-center text-base text-slate-600 mb-6 leading-relaxed">
               Join NFTicate to secure your certificates
             </p>
 
@@ -143,7 +149,7 @@ export default function RegisterPage() {
             <button
               onClick={handleGoogleSignup}
               disabled={isLoading}
-              className="w-full flex justify-center items-center px-4 py-3 border border-slate-300 rounded-lg shadow-sm bg-white text-sm font-medium text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed mb-6"
+              className="w-full flex justify-center items-center px-4 py-3 border-2 border-slate-300 rounded-xl shadow-lg bg-white text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:border-blue-300 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed mb-6 transition-all duration-300 hover:scale-105"
             >
               {isLoading ? (
                 <div className="w-5 h-5 border-2 border-slate-300 border-t-slate-600 rounded-full animate-spin mr-3"></div>
@@ -164,14 +170,14 @@ export default function RegisterPage() {
                 <div className="w-full border-t border-slate-200" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-4 bg-white text-slate-500">Or create account with email</span>
+                <span className="px-4 bg-white/95 text-slate-600 font-medium">Or create account with email</span>
               </div>
             </div>
 
             {/* Email Signup Form */}
-            <form className="space-y-6" onSubmit={handleEmailSignup}>
+            <form className="space-y-4" onSubmit={handleEmailSignup}>
               <div>
-                <label htmlFor="displayName" className="block text-sm font-medium text-slate-700 mb-2">
+                <label htmlFor="displayName" className="block text-sm font-semibold text-slate-700 mb-2">
                   Full Name
                 </label>
                 <input
@@ -181,13 +187,13 @@ export default function RegisterPage() {
                   required
                   value={formData.displayName}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-3 border border-slate-300 rounded-lg placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-300 text-base bg-white/80 backdrop-blur-sm hover:border-blue-300 hover:shadow-md"
                   placeholder="Enter your full name"
                 />
               </div>
 
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-2">
+                <label htmlFor="email" className="block text-sm font-semibold text-slate-700 mb-2">
                   Email Address
                 </label>
                 <input
@@ -198,13 +204,13 @@ export default function RegisterPage() {
                   required
                   value={formData.email}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-3 border border-slate-300 rounded-lg placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-300 text-base bg-white/80 backdrop-blur-sm hover:border-blue-300 hover:shadow-md"
                   placeholder="Enter your email"
                 />
               </div>
 
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-2">
+                <label htmlFor="password" className="block text-sm font-semibold text-slate-700 mb-2">
                   Password
                 </label>
                 <input
@@ -215,13 +221,13 @@ export default function RegisterPage() {
                   required
                   value={formData.password}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-3 border border-slate-300 rounded-lg placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-300 text-base bg-white/80 backdrop-blur-sm hover:border-blue-300 hover:shadow-md"
                   placeholder="Create a password (min 6 characters)"
                 />
               </div>
 
               <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-slate-700 mb-2">
+                <label htmlFor="confirmPassword" className="block text-sm font-semibold text-slate-700 mb-2">
                   Confirm Password
                 </label>
                 <input
@@ -232,7 +238,7 @@ export default function RegisterPage() {
                   required
                   value={formData.confirmPassword}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-3 border border-slate-300 rounded-lg placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-300 text-base bg-white/80 backdrop-blur-sm hover:border-blue-300 hover:shadow-md"
                   placeholder="Confirm your password"
                 />
               </div>
@@ -245,23 +251,23 @@ export default function RegisterPage() {
                   required
                   checked={formData.acceptTerms}
                   onChange={handleInputChange}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-slate-300 rounded"
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-slate-300 rounded transition-all duration-300"
                 />
-                <label htmlFor="acceptTerms" className="ml-2 block text-sm text-slate-700">
+                <label htmlFor="acceptTerms" className="ml-2 block text-sm text-slate-700 font-medium">
                   I agree to the{' '}
-                  <a href="#" className="text-blue-600 hover:text-blue-500">Terms of Service</a>
+                  <a href="#" className="text-blue-600 hover:text-blue-700 font-semibold transition-colors duration-300">Terms of Service</a>
                   {' '}and{' '}
-                  <a href="#" className="text-blue-600 hover:text-blue-500">Privacy Policy</a>
+                  <a href="#" className="text-blue-600 hover:text-blue-700 font-semibold transition-colors duration-300">Privacy Policy</a>
                 </label>
               </div>
 
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full flex justify-center py-4 px-4 border border-transparent rounded-xl shadow-lg text-base font-bold text-white bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 hover:from-blue-700 hover:via-purple-700 hover:to-indigo-700 focus:outline-none focus:ring-4 focus:ring-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 hover:scale-105 hover:shadow-xl"
               >
                 {isLoading ? (
-                  <div className="w-5 h-5 border-2 border-white border-t-blue-200 rounded-full animate-spin"></div>
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                 ) : (
                   "Create Account"
                 )}
@@ -269,27 +275,27 @@ export default function RegisterPage() {
             </form>
 
             {/* Sign In Link */}
-            <div className="mt-8 text-center">
+            <div className="mt-6 text-center">
               <p className="text-sm text-slate-600">
                 Already have an account?{' '}
-                <a href="/login" className="font-medium text-blue-600 hover:text-blue-500">
+                <a href="/login" className="font-bold text-blue-600 hover:text-blue-700 transition-colors duration-300">
                   Sign in here
                 </a>
               </p>
             </div>
 
             {/* SuperAdmin Info */}
-            <div className="mt-8 p-4 bg-blue-50 rounded-lg">
-              <p className="text-sm text-blue-800 text-center">
-                <strong>Institution Admin?</strong> Use email <code className="bg-blue-100 px-2 py-1 rounded">superadmin@nfticate.com</code> for full access
+            <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100">
+              <p className="text-sm text-blue-800 text-center font-medium">
+                <strong>Institution Admin?</strong> Use email <code className="bg-blue-100 px-2 py-1 rounded font-mono text-xs">superadmin@nfticate.com</code> for full access
               </p>
             </div>
           </div>
         </div>
 
         {/* Back to Home */}
-        <div className="mt-8 text-center">
-          <a href="/" className="text-slate-500 hover:text-slate-700 text-sm">
+        <div className="mt-6 text-center">
+          <a href="/" className="text-slate-500 hover:text-slate-700 text-sm font-medium transition-colors duration-300 hover:scale-105 inline-block">
             ← Back to Home
           </a>
         </div>
