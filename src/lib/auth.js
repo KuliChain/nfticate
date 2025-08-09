@@ -31,6 +31,32 @@ export const signInWithGoogle = async () => {
   }
 };
 
+// Helper function to translate Firebase errors to user-friendly messages
+const getErrorMessage = (errorCode) => {
+  switch (errorCode) {
+    case 'auth/invalid-credential':
+      return 'Email atau password salah. Silakan periksa kembali.';
+    case 'auth/user-not-found':
+      return 'Akun dengan email ini tidak ditemukan. Pastikan email benar atau daftar terlebih dahulu.';
+    case 'auth/wrong-password':
+      return 'Password salah. Silakan coba lagi atau reset password.';
+    case 'auth/invalid-email':
+      return 'Format email tidak valid. Contoh: nama@email.com';
+    case 'auth/user-disabled':
+      return 'Akun ini telah dinonaktifkan. Hubungi administrator.';
+    case 'auth/too-many-requests':
+      return 'Terlalu banyak percobaan login. Tunggu beberapa menit atau reset password.';
+    case 'auth/network-request-failed':
+      return 'Koneksi internet bermasalah. Silakan coba lagi.';
+    case 'auth/weak-password':
+      return 'Password terlalu lemah. Gunakan minimal 6 karakter.';
+    case 'auth/email-already-in-use':
+      return 'Email ini sudah terdaftar. Gunakan email lain atau login dengan email ini.';
+    default:
+      return `Terjadi kesalahan: ${errorCode}. Silakan coba lagi.`;
+  }
+};
+
 // Email/Password Sign In
 export const signInWithEmail = async (email, password) => {
   try {
@@ -38,7 +64,12 @@ export const signInWithEmail = async (email, password) => {
     return { success: true, user: result.user };
   } catch (error) {
     console.error("Email sign in error:", error);
-    return { success: false, error: error.message };
+    const userFriendlyMessage = getErrorMessage(error.code);
+    return { 
+      success: false, 
+      error: userFriendlyMessage,
+      code: error.code 
+    };
   }
 };
 
@@ -54,7 +85,12 @@ export const signUpWithEmail = async (email, password, additionalData = {}) => {
     return { success: true, user };
   } catch (error) {
     console.error("Email sign up error:", error);
-    return { success: false, error: error.message };
+    const userFriendlyMessage = getErrorMessage(error.code);
+    return { 
+      success: false, 
+      error: userFriendlyMessage,
+      code: error.code 
+    };
   }
 };
 

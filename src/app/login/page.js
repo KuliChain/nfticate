@@ -98,7 +98,17 @@ export default function LoginPage() {
             {/* Error Message */}
             {error && (
               <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-sm text-red-600">{error}</p>
+                <div className="flex items-start">
+                  <div className="flex-shrink-0">
+                    <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <p className="text-sm font-medium text-red-800">Login Gagal</p>
+                    <p className="text-sm text-red-600 mt-1">{error}</p>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -207,6 +217,57 @@ export default function LoginPage() {
                 <Link href="/register" className="font-bold text-blue-600 hover:text-blue-700 transition-colors duration-300">
                   Sign up here
                 </Link>
+              </p>
+            </div>
+
+            {/* Demo Accounts - For Judges/Testing */}
+            <div className="mt-6 p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border border-amber-200">
+              <p className="text-sm text-amber-800 text-center font-medium mb-3">
+                <strong>🏆 Demo Accounts for Judges</strong>
+              </p>
+              <div className="grid grid-cols-1 gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFormData({
+                      email: "superadmin@nfticate.com",
+                      password: "123456"
+                    });
+                  }}
+                  className="flex items-center justify-between px-3 py-2 bg-purple-100 hover:bg-purple-200 text-purple-800 rounded-lg text-sm font-medium transition-colors"
+                >
+                  <span>👑 SuperAdmin</span>
+                  <span className="text-xs">superadmin@nfticate.com</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFormData({
+                      email: "admin@nfticate.com", 
+                      password: "123456"
+                    });
+                  }}
+                  className="flex items-center justify-between px-3 py-2 bg-blue-100 hover:bg-blue-200 text-blue-800 rounded-lg text-sm font-medium transition-colors"
+                >
+                  <span>🔧 Admin</span>
+                  <span className="text-xs">admin@nfticate.com</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFormData({
+                      email: "student@nfticate.com",
+                      password: "123456"
+                    });
+                  }}
+                  className="flex items-center justify-between px-3 py-2 bg-green-100 hover:bg-green-200 text-green-800 rounded-lg text-sm font-medium transition-colors"
+                >
+                  <span>🎓 Student</span>
+                  <span className="text-xs">student@nfticate.com</span>
+                </button>
+              </div>
+              <p className="text-xs text-amber-600 text-center mt-2">
+                Click any button above to auto-fill login credentials
               </p>
             </div>
 

@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { getCertificate, logCertificateVerification, getOrganization } from "../lib/database";
 
 export default function Home() {
@@ -22,6 +23,18 @@ export default function Home() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Close mobile menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (isMenuOpen && !event.target.closest('nav')) {
+        setIsMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isMenuOpen]);
 
   const handleVerification = async (e) => {
     e.preventDefault();
@@ -293,12 +306,12 @@ export default function Home() {
               <span className="text-lg sm:text-xl font-bold text-slate-900 hover:text-transparent hover:bg-clip-text hover:bg-gradient-to-r hover:from-blue-600 hover:to-purple-600 transition-all duration-300">NFTicate</span>
             </div>
             <div className="hidden md:flex space-x-4">
-              <a href="/login" className="text-slate-700 hover:text-slate-900 px-4 py-2 text-sm lg:text-base hover:scale-105 transition-all duration-300 hover:bg-white/20 rounded-lg backdrop-blur-sm">
+              <Link href="/login" className="text-slate-700 hover:text-slate-900 px-4 py-2 text-sm lg:text-base hover:scale-105 transition-all duration-300 hover:bg-white/20 rounded-lg backdrop-blur-sm">
                 Masuk
-              </a>
-              <a href="/register" className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 text-white px-4 lg:px-6 py-2 rounded-xl hover:from-blue-700 hover:via-purple-700 hover:to-indigo-700 text-sm lg:text-base shadow-2xl hover:scale-105 hover:shadow-3xl transition-all duration-300 animate-gradient-xy">
+              </Link>
+              <Link href="/register" className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 text-white px-4 lg:px-6 py-2 rounded-xl hover:from-blue-700 hover:via-purple-700 hover:to-indigo-700 text-sm lg:text-base shadow-2xl hover:scale-105 hover:shadow-3xl transition-all duration-300 animate-gradient-xy">
                 Daftar
-              </a>
+              </Link>
             </div>
             <button 
               className="md:hidden p-2 transform hover:scale-125 hover:rotate-180 transition-all duration-500 text-slate-700 hover:text-blue-600"
@@ -314,14 +327,36 @@ export default function Home() {
             </button>
           </div>
           {/* Mobile menu with glassmorphism */}
-          {isMenuOpen && (
-            <div className="md:hidden mt-3 py-3 border-t border-white/20 bg-white/10 backdrop-blur-xl rounded-xl animate-slide-down">
-              <div className="space-y-2">
-                <a href="/login" className="block px-4 py-2 text-slate-700 hover:bg-white/20 rounded-lg transition-all duration-300 hover:scale-105">Masuk</a>
-                <a href="/register" className="block bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2 rounded-lg text-center hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 hover:scale-105">Daftar</a>
+          <div className={`md:hidden transition-all duration-300 ease-in-out overflow-hidden ${
+            isMenuOpen 
+              ? 'max-h-40 opacity-100 mt-4' 
+              : 'max-h-0 opacity-0 mt-0'
+          }`}>
+            <div className="py-4 border-t border-white/20 bg-white/10 backdrop-blur-xl rounded-xl">
+              <div className="space-y-3 px-3">
+                <Link 
+                  href="/login" 
+                  className="flex items-center justify-center px-4 py-3 text-slate-700 hover:text-slate-900 hover:bg-white/20 rounded-lg transition-all duration-200 font-medium group"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <svg className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                  </svg>
+                  Masuk
+                </Link>
+                <Link 
+                  href="/register" 
+                  className="flex items-center justify-center bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-3 rounded-lg font-medium hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg group hover:shadow-xl"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <svg className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                  </svg>
+                  Daftar
+                </Link>
               </div>
             </div>
-          )}
+          </div>
         </div>
       </nav>
 
